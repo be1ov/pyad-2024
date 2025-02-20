@@ -1,5 +1,6 @@
 import numpy as np
 import scipy as sc
+import math
 
 
 def matrix_multiplication(matrix_a, matrix_b):
@@ -27,18 +28,34 @@ def functions(a_1, a_2):
     Вернуть нужно координаты найденных решения списком, если они есть. None, если их бесконечно много.
     """
 
-    roots_a1 = np.roots(np.polyder(a_1))
-    roots_a2 = np.roots(np.polyder(a_2))
-    
-    solutions_a1 = np.roots(a_1)
-    solutions_a2 = np.roots(a_2)
-    
-    common_solutions = set(solutions_a1).intersection(solutions_a2)
+    # Функции имеют бесконечно много пересечений только в том случае, если они равны
+    if a_1 == a_2:
+        return None
 
-    if len(common_solutions) >= 0:
-        return list(common_solutions)
+    f = [list(map(float, a_1.split())), list(map(float, a_2.split()))]
+    def F(x, k):
+        return k[0]*x**2 + k[1]*x + k[2]
+
+    # Определим разницу в коэффициентах двух функций
+    a = f[0][0] - f[1][0]
+    b = f[0][1] - f[1][1]
+    c = f[0][2] - f[1][2]
+
+    D = b**2 - 4*a*c
+
+    result = []
     
-    return None
+    if a == 0: # не квадратная
+        if b != 0: # ур-ние вида bx+c=0 => x=-c/b
+            x = -c/b
+            result.append((x, F(x, f[0])))
+    else: # квадратная
+        if D > 0:
+            x_1 = (-b+math.sqrt(D)) / (2*a)
+            x_2 = (-b-math.sqrt(D)) / (2*a)
+            result.extend([(x_1, F(x_1, f[0])), (x_2, F(x_2, f[0]))])
+
+    return result
 
 
 def skew(x):
@@ -46,14 +63,25 @@ def skew(x):
     Задание 3. Функция для расчета коэффициента асимметрии.
     Необходимо вернуть значение коэффициента асимметрии, округленное до 2 знаков после запятой.
     """
-    skewness = sc.stats.skew(x)
-    return round(skewness, 2)
+    x = np.array(x)
+    e = np.mean(x)
 
+    third_central = np.sum((x-e)**3) / len(x)
+    deviation = np.sum((x-e)**2) / len(x)
+    asymmetry = third_central / (deviation ** 1.5) 
+
+    return round(asymmetry, 2)
 
 def kurtosis(x):
     """
     Задание 3. Функция для расчета коэффициента эксцесса.
     Необходимо вернуть значение коэффициента эксцесса, округленное до 2 знаков после запятой.
     """
-    kurt = sc.stats.kurtosis(x)
-    return round(kurt, 2)
+    x = np.array(x)
+    e = np.mean(x)
+
+    fourth_central = np.sum((x-e)**4) / len(x)
+    deviation = np.sum((x-e)**2) / len(x)
+    excess = fourth_central / (deviation ** 2) - 3 
+
+    return round(excess, 2)
